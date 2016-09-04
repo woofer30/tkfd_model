@@ -20,10 +20,10 @@ library("zoo")
 ## **********************************************************************
 
 ## csvデータの読込
-base = read.zoo("data_m.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
-fis  = read.zoo("data_f.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
-hmc  = read.zoo("data_h.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
-pen  = read.zoo("data_p.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
+base = read.zoo("data/data_m.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
+fis  = read.zoo("data/data_f.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
+hmc  = read.zoo("data/data_h.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
+pen  = read.zoo("data/data_p.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
 
 
 ## データの統合前の形式チェック
@@ -59,13 +59,13 @@ base$nas=NA*base$one
 ## プロトタイプモデル 基幹部門 関数作成分野
 ## **********************************************************************
 
-source("func.r", encoding="UTF-8")
+source("src/func.r", encoding="UTF-8")
 
 ## **********************************************************************
 ## プロトタイプモデル 基幹部門 各部門 仮想値（政策変更には以下の仮想値を変更してください）
 ## **********************************************************************
 
-source("policy.r", encoding="UTF-8")
+source("src/policy.r", encoding="UTF-8")
 
 
 M_CPI_GR_A	 =  M_CPI_GR_A_D/100		# 消費者物価変化率 	百分の一
@@ -87,10 +87,10 @@ F_DLT_P 	 =  F_DLT_P_D/100			# 消費税率再引上げ率 百分の一
 
 
 # 桁修正
-source("digit_m.r", encoding="UTF-8", echo=TRUE) 
-source("digit_h.r", encoding="UTF-8", echo=TRUE) 
-source("digit_p.r", encoding="UTF-8", echo=TRUE) 
-source("digit_f.r", encoding="UTF-8", echo=TRUE) 
+source("src/digit_m.r", encoding="UTF-8", echo=TRUE) 
+source("src/digit_h.r", encoding="UTF-8", echo=TRUE) 
+source("src/digit_p.r", encoding="UTF-8", echo=TRUE) 
+source("src/digit_f.r", encoding="UTF-8", echo=TRUE) 
 
 ## **********************************************************************
 ## プロトタイプモデル 将来予測部門 標準計算
@@ -102,7 +102,7 @@ source("digit_f.r", encoding="UTF-8", echo=TRUE)
 ## 
 
 
-source("prj_m.r", encoding="UTF-8", echo=TRUE) 
+source("src/prj_m.r", encoding="UTF-8", echo=TRUE) 
 
 ##base$M_GDP=base$M_GDP
 
@@ -110,17 +110,17 @@ source("prj_m.r", encoding="UTF-8", echo=TRUE)
 ## 
 ## 年金分野（他ファイル参照：未作成）
 ## 
-source("prj_p.r", encoding="UTF-8", echo=TRUE) # 社会保障
+source("src/prj_p.r", encoding="UTF-8", echo=TRUE) # 社会保障
 
 ## 
 ## 医療介護子供分野（他ファイル参照：未作成）
 ## 
-source("prj_h.r", encoding="UTF-8", echo=TRUE) # 社会保障
+source("src/prj_h.r", encoding="UTF-8", echo=TRUE) # 社会保障
 
 ## 
 ## 財政分野（他ファイル参照）
 ## 
-source("prj_f.r", encoding="UTF-8", echo=TRUE) # 財政
+source("src/prj_f.r", encoding="UTF-8", echo=TRUE) # 財政
 
 
 ## **********************************************************************
@@ -131,9 +131,9 @@ nitr=0
 dif=1
 while(dif > 0.01){
 			base$F_PRB_b=base$F_PRB
-			source("prj_p.r", encoding="UTF-8")
-			source("prj_h.r", encoding="UTF-8")
-			source("prj_f.r", encoding="UTF-8")
+			source("src/prj_p.r", encoding="UTF-8")
+			source("src/prj_h.r", encoding="UTF-8")
+			source("src/prj_f.r", encoding="UTF-8")
 			difv=abs(base$F_PRB_b-base$F_PRB)
 			dif=max(difv, na.rm=TRUE)
 			nitr=nitr+1
@@ -149,7 +149,7 @@ dif
 ## プロトタイプモデル 基幹部門 アウトプット分野
 ## **********************************************************************
 
-source("fig.r", encoding="UTF-8", echo=TRUE)
+source("src/fig.r", encoding="UTF-8", echo=TRUE)
 
 
 rm(list=ls(all=TRUE))
