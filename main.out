@@ -1,0 +1,1022 @@
+> ## すべてのデータをクリア
+> rm(list = ls(all = TRUE))
+> 
+> ## **********************************************************************
+> ## プロトタイプモデル 基幹部門 初期設定
+> ## **********************************************************************
+> 
+> 
+> ## ディレクトリ設定 (プログラム内で設定可能)
+> ## setwd('D:\\base')
+> 
+> ## options(digits=10)
+> 
+> ## 時系列データ処理ライブラリ
+> library("zoo")
+> 
+> 
+> ## **********************************************************************
+> ## プロトタイプモデル 基幹部門 データ読み込み分野
+> ## **********************************************************************
+> 
+> ## csvデータの読込
+> base = read.zoo("data_m.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
+> fis  = read.zoo("data_f.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
+> hmc  = read.zoo("data_h.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
+> pen  = read.zoo("data_p.csv",  FUN=identity, index = "year",  sep = ",", header=TRUE, na.strings = c("NA",""))
+> 
+> 
+> ## データの統合前の形式チェック
+> is.numeric(base)
+[1] TRUE
+> is.numeric(fis)
+[1] TRUE
+> is.numeric(hmc)
+[1] TRUE
+> is.numeric(pen)
+[1] TRUE
+> 
+> 
+> ## データの統合
+> base=merge(base,fis)
+> is.numeric(base)
+[1] TRUE
+> rm(fis)
+> base=merge(base,hmc)
+> is.numeric(base)
+[1] TRUE
+> rm(hmc)
+> base=merge(base,pen)
+> is.numeric(base)
+[1] TRUE
+> rm(pen)
+> 
+> 
+> # 西暦を1行目に入れる
+> bname = colnames(base)
+> base = cbind(zoo(index(base), order.by = index(base) ) ,base)
+> colnames(base) <- c("yeard", bname)
+> 
+> # 予約変数 全て1の変数
+> base$one=1
+> base$zero=0*base$one
+> base$nas=NA*base$one
+> 
+> ## **********************************************************************
+> ## プロトタイプモデル 基幹部門 関数作成分野
+> ## **********************************************************************
+> 
+> source("func.r", encoding="UTF-8")
+> 
+> ## **********************************************************************
+> ## プロトタイプモデル 基幹部門 各部門 仮想値（政策変更には以下の仮想値を変更してください）
+> ## **********************************************************************
+> 
+> source("policy.r", encoding="UTF-8")
+> 
+> 
+> M_CPI_GR_A	 =  M_CPI_GR_A_D/100		# 消費者物価変化率 	百分の一
+> M_TFP_GR_A	 =  M_TFP_GR_A_D/100		# TFP上昇率 		百分の一
+> M_BUNPAI	 =  M_BUNPAI_D/100		# 資本分配率 		百分の一
+> M_POP_GR_A	 =  M_POP_GR_A_D/100		# 人口成長率 		百分の一
+> F_BOND_SPREAD 	 =  F_BOND_SPREAD_D/100		# 国債利子率スプレッド	百分の一
+> H_HM_pat_rate 	 =  H_HM_pat_rate_D*0.1175137	# 名目GDPから算出される患者の医療費自己負担率
+> H_ELA_0_14	 =  1.000			# 年齢別医療弾性値
+> H_ELA_15_44	 =  1.000			# 年齢別医療弾性値
+> H_ELA_45_64	 =  1.000			# 年齢別医療弾性値
+> H_ELA_65_74	 =  1.000			# 年齢別医療弾性値
+> H_ELA_75_o	 =  1.000			# 年齢別医療弾性値
+> 
+> 
+> F_DLT_P1 	 =  F_DLT_P1_D/100*(1/(1-1/5.4))	# 消費税率再引上げ率 百分の一(軽減税率なし)
+> F_DLT_P0 	 =  F_DLT_P0_D/100			# 消費税率再引上げ率 百分の一(2017年引き上げ予定分)
+> F_DLT_P 	 =  F_DLT_P_D/100			# 消費税率再引上げ率 百分の一
+> 
+> 
+> # 桁修正
+> source("digit_m.r", encoding="UTF-8", echo=TRUE) 
+
+> base$M_MARKET_RATE = base$M_MARKET_RATE/100
+
+> base$M_BOND_RATE = base$M_BOND_RATE/100
+> source("digit_h.r", encoding="UTF-8", echo=TRUE) 
+
+> base$H_HM_pat_rates = dexpd(0.1175137 * base$one, 
++     H_HM_pat_rate * base$one, 2013)
+
+> base$H_HM_EXP_0_14 = base$H_HM_EXP_0_14 * 1000
+
+> base$H_HM_EXP_15_44 = base$H_HM_EXP_15_44 * 1000
+
+> base$H_HM_EXP_45_64 = base$H_HM_EXP_45_64 * 1000
+
+> base$H_HM_EXP_65_74 = base$H_HM_EXP_65_74 * 1000
+
+> base$H_HM_EXP_75_o = base$H_HM_EXP_75_o * 1000
+
+> base$H_HM_EXP_SHAKAI = base$H_HM_EXP_SHAKAI/10
+
+> base$H_HC_EXP_SHISETU = base$H_HC_EXP_SHISETU * 1000
+
+> base$H_HC_EXP_TIIKI = base$H_HC_EXP_TIIKI * 1000
+
+> base$H_HC_EXP_KYOTAKU = base$H_HC_EXP_KYOTAKU * 1000
+
+> base$H_HC_EXP_SHISETU_PC = base$H_HC_EXP_SHISETU_PC/1000
+
+> base$H_HC_EXP_TIIKI_PC = base$H_HC_EXP_TIIKI_PC/1000
+
+> base$H_HC_EXP_KYOTAKU_PC = base$H_HC_EXP_KYOTAKU_PC/1000
+> source("digit_p.r", encoding="UTF-8", echo=TRUE) 
+
+> base$P_REV_OTH_WORK = base$P_REV_OTH_WORK * 10^3
+
+> base$P_REV_OTH_KOKU = base$P_REV_OTH_KOKU * 10^3
+
+> base$P_EXP_OTH_WORK = base$P_EXP_OTH_WORK * 10^3
+
+> base$P_EXP_OTH_KOKU = base$P_EXP_OTH_KOKU * 10^3
+
+> base$P_EXP_KOKU = base$P_EXP_KOKU/10^6
+
+> base$P_GRA_KOKU = base$P_GRA_KOKU/10^6
+
+> base$P_EXP_KISO = base$P_EXP_KISO/10^6
+
+> base$P_EXP_KOSEI = base$P_EXP_KOSEI/10^6
+
+> base$P_GRA_KOSEI = base$P_GRA_KOSEI/10^6
+
+> base$P_EXP_KOKKA = base$P_EXP_KOKKA/10^6
+
+> base$P_GRA_KOKKA = base$P_GRA_KOKKA/10^6
+
+> base$P_EXP_CHIHOU_TAISHOKU = base$P_EXP_CHIHOU_TAISHOKU/10^6
+
+> base$P_EXP_CHIHOU_SHOGAI = base$P_EXP_CHIHOU_SHOGAI/10^6
+
+> base$P_EXP_CHIHOU_IZOKU = base$P_EXP_CHIHOU_IZOKU/10^6
+
+> base$P_GRA_CHIHOU = base$P_GRA_CHIHOU/10^6
+
+> base$P_EXP_SHIGAKU_TAISHOKU = base$P_EXP_SHIGAKU_TAISHOKU/10^6
+
+> base$P_EXP_SHIGAKU_SHOGAI = base$P_EXP_SHIGAKU_SHOGAI/10^6
+
+> base$P_EXP_SHIGAKU_IZOKU = base$P_EXP_SHIGAKU_IZOKU/10^6
+
+> base$P_GRA_SHIGAKU = base$P_GRA_SHIGAKU/10^6
+
+> base$P_REV_KOKU = base$P_REV_KOKU/10^6
+
+> base$P_REV_KOKKA = base$P_REV_KOKKA/10^6
+
+> base$P_REV_CHIHOU = base$P_REV_CHIHOU/10^6
+
+> base$P_REV_SHIGAKU = base$P_REV_SHIGAKU/10^6
+
+> base$P_REV_KOSEI = base$P_REV_KOSEI/10^6
+
+> base$P_RESERVE_KOKU = base$P_RESERVE_KOKU * 10^3
+
+> base$P_RESERVE_WORK = base$P_RESERVE_WORK * 10^3
+
+> base$P_REV_KOKKA_KAKE = base$P_REV_KOKKA_KAKE/10^6
+
+> base$P_REV_CHIHOU_KAKE = base$P_REV_CHIHOU_KAKE/10^6
+
+> base$P_REWARD = base$P_REWARD * 10^3
+
+> base$P_RPRE_KOSEI = base$P_RPRE_KOSEI/100
+
+> base$P_RNOHU = base$P_RNOHU/100
+
+> base$P_NPOP_JUKYU_KISO = base$P_NPOP_JUKYU_KISO/10^3
+
+> base$P_NPOP_JUKYU_KOSEI = base$P_NPOP_JUKYU_KOSEI/10^3
+
+> base$P_NPOP_JUKYU_KOKKA = base$P_NPOP_JUKYU_KOKKA/10^3
+
+> base$P_NPOP_JUKYU_CHIHOU = base$P_NPOP_JUKYU_CHIHOU/10^3
+
+> base$P_NPOP_JUKYU_SHIGAKU = base$P_NPOP_JUKYU_SHIGAKU/10^3
+
+> base$P_NPOP_ICHI = base$P_NPOP_ICHI/10^3
+
+> base$P_NPOP_ICHI_SANTEI = base$P_NPOP_ICHI_SANTEI * 
++     10^3
+
+> base$P_NPOP_NI_KOSEI = base$P_NPOP_NI_KOSEI/10^3
+
+> base$P_NPOP_NI_KOKKA = base$P_NPOP_NI_KOKKA/10^3
+
+> base$P_NPOP_NI_CHIHOU = base$P_NPOP_NI_CHIHOU/10^3
+
+> base$P_NPOP_NI_SHIGAKU = base$P_NPOP_NI_SHIGAKU/10^3
+
+> base$P_NPOP_SAN_KOSEI = base$P_NPOP_SAN_KOSEI/10^3
+
+> base$P_NPOP_SAN_KOKKA = base$P_NPOP_SAN_KOKKA/10^3
+
+> base$P_NPOP_SAN_CHIHOU = base$P_NPOP_SAN_CHIHOU/10^3
+
+> base$P_NPOP_SAN_SHIGAKU = base$P_NPOP_SAN_SHIGAKU/10^3
+
+> base$P_NPOP_SAN = base$P_NPOP_SAN/10^3
+
+> base$P_RMENJO = base$P_RMENJO/100
+
+> base$P_MPRE_KOKU = base$P_MPRE_KOKU/10^9
+
+> base$P_LIAB_KOKU = base$P_LIAB_KOKU/10^6
+
+> base$P_EXP_KOKU_KISO = base$P_EXP_KOKU_KISO/10
+
+> base$P_EXP_WORK_KISO = base$P_EXP_WORK_KISO/10^6
+> source("digit_f.r", encoding="UTF-8", echo=TRUE) 
+
+> base$DMY_F_DLT_MID = ifelse(index(base) > 2016, ifelse(index(base) == 
++     F_DLT_Y0_MID, 1, 0), 0)
+
+> base$F_PRB_FIX_RGDP = dexpd(0 * base$one, 0.01 * base$one, 
++     2013)
+
+> base$F_DLT = dexpd(base$F_DLT, base$F_DLT + as.numeric(F_DLT_P1) * 
++     base$one, as.numeric(F_DLT_Y1) - 1)
+
+> base$F_DLT = dexpd(base$F_DLT, base$F_DLT + as.numeric(F_DLT_P0) * 
++     base$one - 0.5 * as.numeric(F_DLT_P0) * base$DMY_F_DLT_MID, 
++     as.nume .... [TRUNCATED] 
+
+> base$F_DLT = dexpd(base$F_DLT, base$F_DLT + as.numeric(F_DLT_P) * 
++     base$one, as.numeric(F_DLT_Y) - 1)
+> 
+> ## **********************************************************************
+> ## プロトタイプモデル 将来予測部門 標準計算
+> ## **********************************************************************
+> 
+> 
+> ## 
+> ## マクロ分野（他ファイル参照）
+> ## 
+> 
+> 
+> source("prj_m.r", encoding="UTF-8", echo=TRUE) 
+
+> base$M_TFP_GR = dexpd(base$M_TFP_GR, M_TFP_GR_A * 
++     base$one, 2013)
+
+> base$M_CPI_GR_T = base$M_CPI/lag(base$M_CPI, k = -1) - 
++     1
+
+> base$M_CPI_GR = dexpd(base$M_CPI_GR_T, M_CPI_GR_A * 
++     base$one, 2013)
+
+> base$M_CPI_GR = intrpl(base$M_CPI_GR, 2013, 2018)
+
+> base$M_CPI = acml(base$M_CPI, 0 * base$one, 1 + base$M_CPI_GR, 
++     2014)
+
+> base$M_PGDP = (base$M_GDP/base$M_GDP_R) * 100
+
+> base$M_PGDP_GR_T = base$M_PGDP/lg2(base$M_PGDP) - 
++     1
+
+> base$M_PGDP_GR = dexpd(base$M_PGDP_GR_T, as.numeric(base$M_PGDP_GR_T[index(base) == 
++     2013]) + base$M_CPI_GR - as.numeric(base$M_CPI_GR[index(b .... [TRUNCATED] 
+
+> base$M_PGDP = acml(base$M_PGDP, 0 * base$one, 1 + 
++     base$M_PGDP_GR, 2014)
+
+> base$M_WAGE_GR_T = base$M_WAGE/lag(base$M_WAGE, k = -1) - 
++     1
+
+> base$M_WAGE_GR = dexpd(base$M_WAGE_GR_T, (base$M_TFP_GR)/(1 - 
++     M_BUNPAI) + base$M_CPI_GR, 2013)
+
+> base$M_WAGE = acml(base$M_WAGE, 0 * base$one, 1 + 
++     base$M_WAGE_GR, 2014)
+
+> base$M_WAGE_R_GR_T = base$M_WAGE_GR_T - base$M_PGDP_GR
+
+> base$M_WAGE_R_GR = dexpd(base$M_WAGE_R_GR_T, (base$M_TFP_GR)/(1 - 
++     M_BUNPAI), 2013)
+
+> base$M_WAGE_R = acml(base$M_WAGE_GR - base$M_PGDP_GR, 
++     0 * base$one, 1 + base$M_WAGE_R_GR, 2014)
+
+> base$M_POP_15_64 = base$M_POP_15_44 + base$M_POP_45_64
+
+> base$M_POP_15_64_GR_T = base$M_POP_15_64/lag(base$M_POP_15_64, 
++     k = -1) - 1
+
+> base$M_POP_15_64_GR = dexpd(base$M_POP_15_64_GR_T, 
++     M_POP_GR_A * base$one, 2013)
+
+> base$M_POP_GR_T = base$M_POP/lag(base$M_POP, k = -1) - 
++     1
+
+> base$M_POP_GR = dexpd(base$M_POP_GR_T, M_POP_GR_A * 
++     base$one, 2013)
+
+> base$M_POP_65_o = base$M_POP_65_74 + base$M_POP_75_o
+
+> base$M_GDP_R_GR_T = base$M_GDP_R/lag(base$M_GDP_R, 
++     k = -1) - 1
+
+> base$M_GDP_R_GR = dexpd(base$M_GDP_R_GR_T, (base$M_TFP_GR)/(1 - 
++     M_BUNPAI) + base$M_POP_15_64_GR, 2013)
+
+> base$M_GDP_R_GR = intrpl(base$M_GDP_R_GR, 2013, 2018)
+
+> base$M_GDP_R = acml(base$M_GDP_R, 0 * base$one, 1 + 
++     base$M_GDP_R_GR, 2014)
+
+> base$M_GDP_GR_T = base$M_GDP/lag(base$M_GDP, k = -1) - 
++     1
+
+> base$M_GDP_GR = dexpd(base$M_GDP_GR_T, base$M_GDP_R_GR + 
++     base$M_PGDP_GR, 2013)
+
+> base$M_GDP = acml(base$M_GDP, 0 * base$one, 1 + base$M_GDP_GR, 
++     2014)
+
+> base$M_GDP_R_PC = base$M_GDP_R/base$M_POP
+
+> base$M_GDP_R_PC_GR = base$M_GDP_R_PC/lag(base$M_GDP_R_PC, 
++     k = -1) - 1
+
+> base$M_GDP_R_PC = acml(base$M_GDP_R, 0 * base$one, 
++     1 + base$M_GDP_R_GR, 2014)
+
+> base$M_GDP_PC = base$M_GDP/base$M_POP
+
+> base$M_GDP_PC_GR = base$M_GDP_PC/lag(base$M_GDP_PC, 
++     k = -1) - 1
+
+> base$M_GDP_PC = acml(base$M_GDP, 0 * base$one, 1 + 
++     base$M_GDP_GR, 2014)
+
+> base$M_MARKET_RATE = dexpd(base$M_MARKET_RATE, base$M_GDP_R_GR + 
++     base$M_CPI_GR, 2013)
+
+> base$M_MARKET_RATE = intrpl(base$M_MARKET_RATE, 2013, 
++     2026)
+
+> base$M_BOND_RATE = dexpd(base$M_BOND_RATE, base$M_GDP_GR, 
++     2013)
+
+> base$M_BOND_RATE = intrpl(base$M_BOND_RATE, 2013, 
++     2026)
+> 
+> ##base$M_GDP=base$M_GDP
+> 
+> 
+> ## 
+> ## 年金分野（他ファイル参照：未作成）
+> ## 
+> source("prj_p.r", encoding="UTF-8", echo=TRUE) # 社会保障
+
+> base$P_RNWAGE_H16 = dexpd(base$P_RNWAGE_H16, base$M_WAGE/as.numeric(base$M_WAGE["2004"]) - 
++     1, 2012)
+
+> base$P_NPOP_NI = base$P_NPOP_NI_KOSEI + base$P_NPOP_NI_KOKKA + 
++     base$P_NPOP_NI_CHIHOU + base$P_NPOP_NI_SHIGAKU
+
+> base$P_NPOP_SAN = dexpd2(base$P_NPOP_SAN, base$P_NPOP_SAN_KOSEI + 
++     base$P_NPOP_SAN_KOKKA + base$P_NPOP_SAN_CHIHOU + base$P_NPOP_SAN_SHIGAKU, 
+ .... [TRUNCATED] 
+
+> base$P_RNPOP_P = dexpd(base$P_RNPOP_P, diff(base$P_NPOP_ICHI + 
++     base$P_NPOP_NI + base$P_NPOP_SAN)/(base$P_NPOP_ICHI + base$P_NPOP_NI + 
++      .... [TRUNCATED] 
+
+> base$P_REV_KOKKA = base$P_REV_KOKKA_KAKE * 2
+
+> base$P_REV_CHIHOU = base$P_REV_CHIHOU_KAKE * 2
+
+> for (i in 2013:2110) {
++     base$P_ARNPOP_P[paste(i)] = mean(base$P_RNPOP_P[paste(i - 
++         4)], base$P_RNPOP_P[paste(i - 3)], base$P_RNPOP_P[ .... [TRUNCATED] 
+
+> base$P_WAGE_GR_MACRO_WORK = lg2(base$M_WAGE_GR)
+
+> base$P_WAGE_GR_MACRO_KISO = lg2(base$M_WAGE_GR)
+
+> for (m in 2013:P_SLIDE_WORK_END) {
++     base$P_WAGE_GR_MACRO_WORK[paste(m)] = ifelse(as.numeric(-base$P_ARNPOP_P[paste(m)] + 
++         0.003) < as .... [TRUNCATED] 
+
+> for (m in 2013:P_SLIDE_KISO_END) {
++     base$P_WAGE_GR_MACRO_KISO[paste(m)] = ifelse(as.numeric(-base$P_ARNPOP_P[paste(m)] + 
++         0.003) < as .... [TRUNCATED] 
+
+> base$P_WAGE_WORK = acml(base$M_WAGE, 0 * base$one, 
++     1 + base$P_WAGE_GR_MACRO_WORK, 2013)
+
+> base$P_WAGE_KISO = acml(base$M_WAGE, 0 * base$one, 
++     1 + base$P_WAGE_GR_MACRO_KISO, 2013)
+
+> for (i in 1980:2101) {
++     base$P_WAGE_A[paste(i + 7)] = mean(base$P_WAGE_WORK[paste(i)], 
++         base$P_WAGE_WORK[paste(i + 1)], base$P_WAGE_W .... [TRUNCATED] 
+
+> base$P_NEXP_KOKU = base$P_EXP_KOKU - base$P_GRA_KOKU
+
+> base$P_NEXP_KOKU["2013"] = mean(base$P_NEXP_KOKU, 
++     na.rm = T)
+
+> base$P_NEXP_KOKU = acml(base$P_NEXP_KOKU, 0 * base$one, 
++     1 + base$M_POP_GR, 2014)
+
+> base$P_EXP_OTH_KOKU = acml(base$P_EXP_OTH_KOKU, 0 * 
++     base$one, 1 + base$M_POP_GR, 2015)
+
+> base$P_EXP_CHIHOU = base$P_EXP_CHIHOU_TAISHOKU + base$P_EXP_CHIHOU_SHOGAI + 
++     base$P_EXP_CHIHOU_IZOKU
+
+> base$P_EXP_SHIGAKU = base$P_EXP_SHIGAKU_TAISHOKU + 
++     base$P_EXP_SHIGAKU_SHOGAI + base$P_EXP_SHIGAKU_IZOKU
+
+> base$P_NEXP_WORK = (base$P_EXP_KOSEI + base$P_EXP_KOKKA + 
++     base$P_EXP_CHIHOU + base$P_EXP_SHIGAKU - base$P_GRA_KOSEI - 
++     base$P_GRA_KOKKA .... [TRUNCATED] 
+
+> base$P_NPOP_JUKYU_WORK = (base$P_NPOP_JUKYU_KOSEI + 
++     base$P_NPOP_JUKYU_KOKKA + base$P_NPOP_JUKYU_CHIHOU + base$P_NPOP_JUKYU_SHIGAKU)
+
+> base$P_NPOP_JUKYU_WORK = dexpd(base$P_NPOP_JUKYU_WORK, 
++     exp(-5.24588 + 1.52787 * log(base$M_POP_65_o)), 2013)
+
+> base$P_NEXP_WORK = dexpd(base$P_NEXP_WORK, exp(-6.4159025 + 
++     0.5247495 * log(base$P_NPOP_JUKYU_WORK) + 0.8864705 * log(base$P_WAGE_A)), 
++     .... [TRUNCATED] 
+
+> base$P_EXP_OTH_WORK = acml(base$P_EXP_OTH_WORK, 0 * 
++     base$one, 1 + base$M_POP_GR, 2015)
+
+> base$P_NPOP_JUKYU_P = base$P_NPOP_JUKYU_KISO + base$P_NPOP_JUKYU_WORK
+
+> base$P_NPOP_JUKYU_P = dexpd(base$P_NPOP_JUKYU_P, exp(-3.804379 + 
++     1.445686 * log(base$M_POP_65_o)), 2013)
+
+> base$P_EXP_KISO = dexpd(base$P_EXP_KISO, exp(-10.4560219952666 + 
++     0.946088920842381 * log(base$P_NPOP_JUKYU_P) + 0.785966661933845 * 
++     lo .... [TRUNCATED] 
+
+> base$P_KENSHO_EXCEPT_LIAB_KOKU = base$P_KENSHO_LIAB_KOKU - 
++     base$P_KENSHO_EXP_KOKU_KISO * 0.5
+
+> base$P_REXCEPT_LIAB = base$P_KENSHO_EXCEPT_LIAB_KOKU/base$P_KENSHO_EXP_KISO
+
+> base$P_EXCEPT_LIAB = base$P_EXP_KISO * base$P_REXCEPT_LIAB
+
+> base$P_EXP_KOKU_KISO = dexpd(base$P_EXP_KOKU_KISO, 
++     (base$P_EXP_KISO - base$P_EXCEPT_LIAB)/(base$P_NPOP_ICHI_SANTEI + 
++         base$P_NPOP_N .... [TRUNCATED] 
+
+> base$P_EXP_WORK_KISO = dexpd(base$P_EXP_WORK_KISO, 
++     (base$P_EXP_KISO - base$P_EXCEPT_LIAB)/(base$P_NPOP_ICHI_SANTEI + 
++         base$P_NPOP_N .... [TRUNCATED] 
+
+> base$P_LIAB_KOKU = dexpd(base$P_LIAB_KOKU, base$P_EXP_KOKU_KISO * 
++     0.5 + base$P_EXCEPT_LIAB, 2013)
+
+> base$P_LIAB_WORK = base$P_EXP_WORK_KISO * 0.5
+
+> base$P_AEXP_KOKU = base$P_NEXP_KOKU + base$P_EXP_KOKU_KISO + 
++     base$P_EXP_OTH_KOKU
+
+> base$P_AEXP_WORK = base$P_NEXP_WORK + base$P_EXP_WORK_KISO + 
++     base$P_EXP_OTH_WORK
+
+> base$P_REV_KOKU = dexpd(base$P_REV_KOKU, (base$P_NPOP_ICHI * 
++     1000 * (1 - base$P_RMENJO) * base$P_RNOHU) * base$P_MPRE_KOKU * 
++     (1 + base .... [TRUNCATED] 
+
+> base$P_REV_WORK = base$P_REV_KOSEI + base$P_REV_KOKKA + 
++     base$P_REV_CHIHOU + base$P_REV_SHIGAKU
+
+> base$P_REV_WORK = dexpd(base$P_REV_WORK, base$P_REWARD * 
++     (1 + base$M_WAGE_GR) * base$P_RPRE_KOSEI, 2013)
+
+> base$P_R_OTH_KOKU = dexpd(base$P_R_OTH_KOKU, base$P_KENSHO_REV_OTH_KOKU/base$P_KENSHO_REV_KOKU, 
++     2013)
+
+> base$P_REV_OTH_KOKU = dexpd(base$P_REV_OTH_KOKU, base$P_REV_KOKU * 
++     base$P_R_OTH_KOKU, 2013)
+
+> base$P_R_OTH_WORK = dexpd(base$P_R_OTH_WORK, base$P_KENSHO_REV_OTH_WORK/base$P_KENSHO_REV_WORK, 
++     2013)
+
+> P_R_REV_OTH_WORK = mean(base$P_KENSHO_REV_WORK, na.rm = T)
+
+> base$P_REV_OTH_WORK = dexpd(base$P_REV_OTH_WORK, base$P_REV_WORK * 
++     base$P_R_OTH_WORK, 2013)
+
+> base$P_AREV_KOKU = base$P_REV_KOKU + base$P_LIAB_KOKU + 
++     base$P_REV_OTH_KOKU
+
+> base$P_AREV_WORK = base$P_REV_WORK + base$P_LIAB_WORK + 
++     base$P_REV_OTH_WORK
+
+> base$P_BA_KOKU = base$P_AREV_KOKU - base$P_AEXP_KOKU
+
+> base$P_BA_WORK = base$P_AREV_WORK - base$P_AEXP_WORK
+
+> for (i in 2006:2013) {
++     base$P_PREMIUM[paste(i)] = base$M_MARKET_RATE[paste(i)] - 
++         base$P_TOVER[paste(i)]
++ }
+
+> PREMIUM = mean(base$P_PREMIUM, na.rm = T)
+
+> base$P_TOVER = dexpd(base$P_TOVER, base$M_MARKET_RATE - 
++     base$one * PREMIUM, 2012)
+
+> for (i in 2014:2110) {
++     base$P_INCOME_KOKU[paste(i)] = (as.numeric(base$P_RESERVE_KOKU[paste(i - 
++         1)]) + as.numeric(base$P_BA_KOKU[pa .... [TRUNCATED] 
+
+> for (i in 2014:2110) {
++     base$P_INCOME_WORK[paste(i)] = (as.numeric(base$P_RESERVE_WORK[paste(i - 
++         1)]) + as.numeric(base$P_BA_WORK[pa .... [TRUNCATED] 
+> 
+> ## 
+> ## 医療介護子供分野（他ファイル参照：未作成）
+> ## 
+> source("prj_h.r", encoding="UTF-8", echo=TRUE) # 社会保障
+
+> base$H_HM_EXP_PC_0_14 = base$H_HM_EXP_PC_0_14[index(base) == 
++     2013]
+
+> base$H_HM_EXP_PC_15_44 = base$H_HM_EXP_PC_15_44[index(base) == 
++     2013]
+
+> base$H_HM_EXP_PC_45_64 = base$H_HM_EXP_PC_45_64[index(base) == 
++     2013]
+
+> base$H_HM_EXP_PC_65_74 = base$H_HM_EXP_PC_65_74[index(base) == 
++     2013]
+
+> base$H_HM_EXP_PC_75_o = base$H_HM_EXP_PC_75_o[index(base) == 
++     2013]
+
+> base$H_HM_EXP_0_14 = dexpd(base$H_HM_EXP_0_14, base$H_HM_EXP_PC_0_14 * 
++     base$M_POP_0_14 * (((1 + base$M_GDP_R_PC_GR)^base$H_RUR - 
++     1) *  .... [TRUNCATED] 
+
+> base$H_HM_EXP_15_44 = dexpd(base$H_HM_EXP_15_44, base$H_HM_EXP_PC_15_44 * 
++     base$M_POP_15_44 * (((1 + base$M_GDP_R_PC_GR)^base$H_RUR - 
++     1 .... [TRUNCATED] 
+
+> base$H_HM_EXP_45_64 = dexpd(base$H_HM_EXP_45_64, base$H_HM_EXP_PC_45_64 * 
++     base$M_POP_45_64 * (((1 + base$M_GDP_R_PC_GR)^base$H_RUR - 
++     1 .... [TRUNCATED] 
+
+> base$H_HM_EXP_65_74 = dexpd(base$H_HM_EXP_65_74, base$H_HM_EXP_PC_65_74 * 
++     base$M_POP_65_74 * (((1 + base$M_GDP_R_PC_GR)^base$H_RUR - 
++     1 .... [TRUNCATED] 
+
+> base$H_HM_EXP_75_o = dexpd(base$H_HM_EXP_75_o, base$H_HM_EXP_PC_75_o * 
++     base$M_POP_75_o * (((1 + base$M_GDP_R_PC_GR)^base$H_RUR - 
++     1) *  .... [TRUNCATED] 
+
+> base$H_HM_EXP = base$H_HM_EXP_0_14 + base$H_HM_EXP_15_44 + 
++     base$H_HM_EXP_45_64 + base$H_HM_EXP_65_74 + base$H_HM_EXP_75_o
+
+> base$H_HM_ad_rate = base$H_HM_EXP_SHAKAI/base$H_HM_EXP_KOKUMIN
+
+> base$H_HM_ad_rate = base$H_HM_ad_rate[index(base) == 
++     2013]
+
+> base$H_HM_EXP_social = base$H_HM_EXP * base$H_HM_ad_rate
+
+> base$H_HM_de_EXP_0_14 = base$H_HM_EXP_0_14 * 0.7
+
+> base$H_HM_de_EXP_15_44 = base$H_HM_EXP_15_44 * 0.7
+
+> base$H_HM_de_EXP_45_64 = base$H_HM_EXP_45_64 * 0.7
+
+> base$H_HM_de_EXP_65_74 = base$H_HM_EXP_65_74 * 0.7
+
+> base$H_HM_de_EXP_75_o = base$H_HM_EXP_75_o * 0.9
+
+> base$H_HM_POP_KOUKI = base$H_HM_POP_KOUKI[index(base) == 
++     2013]
+
+> base$H_HM_POP_KOKUHO = base$H_HM_POP_KOKUHO[index(base) == 
++     2013]
+
+> base$H_HM_POP_KENPO = base$H_HM_POP_KENPO[index(base) == 
++     2013]
+
+> base$H_HM_POP_KUMIAI = base$H_HM_POP_KUMIAI[index(base) == 
++     2013]
+
+> base$H_HM_POP_KYOSAI = base$H_HM_POP_KYOSAI[index(base) == 
++     2013]
+
+> base$H_HM_POP_ins = base$H_HM_POP_KOUKI + base$H_HM_POP_KOKUHO + 
++     base$H_HM_POP_KENPO + base$H_HM_POP_KUMIAI + base$H_HM_POP_KYOSAI
+
+> base$H_HM_POP_KOUKI_rate = base$H_HM_POP_KOUKI/base$H_HM_POP_ins
+
+> base$H_HM_POP_KOKUHO_rate = base$H_HM_POP_KOKUHO/base$H_HM_POP_ins
+
+> base$H_HM_POP_KENPO_rate = base$H_HM_POP_KENPO/base$H_HM_POP_ins
+
+> base$H_HM_POP_KUMIAI_rate = base$H_HM_POP_KUMIAI/base$H_HM_POP_ins
+
+> base$H_HM_POP_KYOSAI_rate = base$H_HM_POP_KYOSAI/base$H_HM_POP_ins
+
+> base$H_HM_POP_KOKUHO_0_14 = base$M_POP_0_14 * base$H_HM_POP_KOKUHO_rate
+
+> base$H_HM_POP_KOKUHO_15_44 = base$M_POP_15_44 * base$H_HM_POP_KOKUHO_rate
+
+> base$H_HM_POP_KOKUHO_45_64 = base$M_POP_45_64 * base$H_HM_POP_KOKUHO_rate
+
+> base$H_HM_POP_KOKUHO_65_74 = base$M_POP_65_74 * base$H_HM_POP_KOKUHO_rate
+
+> base$H_HM_POP_KENPO_0_14 = base$M_POP_0_14 * base$H_HM_POP_KENPO_rate
+
+> base$H_HM_POP_KENPO_15_44 = base$M_POP_15_44 * base$H_HM_POP_KENPO_rate
+
+> base$H_HM_POP_KENPO_45_64 = base$M_POP_45_64 * base$H_HM_POP_KENPO_rate
+
+> base$H_HM_POP_KENPO_65_74 = base$M_POP_65_74 * base$H_HM_POP_KENPO_rate
+
+> base$H_HM_POP_KUMIAI_0_14 = base$M_POP_0_14 * base$H_HM_POP_KUMIAI_rate
+
+> base$H_HM_POP_KUMIAI_15_44 = base$M_POP_15_44 * base$H_HM_POP_KUMIAI_rate
+
+> base$H_HM_POP_KUMIAI_45_64 = base$M_POP_45_64 * base$H_HM_POP_KUMIAI_rate
+
+> base$H_HM_POP_KUMIAI_65_74 = base$M_POP_65_74 * base$H_HM_POP_KUMIAI_rate
+
+> base$H_HM_POP_KYOSAI_0_14 = base$M_POP_0_14 * base$H_HM_POP_KYOSAI_rate
+
+> base$H_HM_POP_KYOSAI_15_44 = base$M_POP_15_44 * base$H_HM_POP_KYOSAI_rate
+
+> base$H_HM_POP_KYOSAI_45_64 = base$M_POP_45_64 * base$H_HM_POP_KYOSAI_rate
+
+> base$H_HM_POP_KYOSAI_65_74 = base$M_POP_65_74 * base$H_HM_POP_KYOSAI_rate
+
+> base$H_HM_POP_ins_0_14 = base$H_HM_POP_KOKUHO_0_14 + 
++     base$H_HM_POP_KENPO_0_14 + base$H_HM_POP_KUMIAI_0_14 + base$H_HM_POP_KYOSAI_0_14
+
+> base$H_HM_POP_ins_15_44 = base$H_HM_POP_KOKUHO_15_44 + 
++     base$H_HM_POP_KENPO_15_44 + base$H_HM_POP_KUMIAI_15_44 + 
++     base$H_HM_POP_KYOSAI_1 .... [TRUNCATED] 
+
+> base$H_HM_POP_ins_45_64 = base$H_HM_POP_KOKUHO_45_64 + 
++     base$H_HM_POP_KENPO_45_64 + base$H_HM_POP_KUMIAI_45_64 + 
++     base$H_HM_POP_KYOSAI_4 .... [TRUNCATED] 
+
+> base$H_HM_POP_ins_65_74 = base$H_HM_POP_KOKUHO_65_74 + 
++     base$H_HM_POP_KENPO_65_74 + base$H_HM_POP_KUMIAI_65_74 + 
++     base$H_HM_POP_KYOSAI_6 .... [TRUNCATED] 
+
+> base$H_HM_EXP_KOUKI_pub = base$H_HM_de_EXP_75_o * 
++     0.5
+
+> base$H_HM_EXP_KOUKI_pre = base$H_HM_de_EXP_75_o * 
++     0.5
+
+> base$H_HM_EXP_KOKUHO_0_14 = base$H_HM_POP_KOKUHO_0_14/base$H_HM_POP_ins_0_14 * 
++     base$H_HM_de_EXP_0_14
+
+> base$H_HM_EXP_KOKUHO_15_44 = base$H_HM_POP_KOKUHO_15_44/base$H_HM_POP_ins_15_44 * 
++     base$H_HM_de_EXP_15_44
+
+> base$H_HM_EXP_KOKUHO_45_64 = base$H_HM_POP_KOKUHO_45_64/base$H_HM_POP_ins_45_64 * 
++     base$H_HM_de_EXP_45_64
+
+> base$H_HM_EXP_KOKUHO_65_74 = base$H_HM_POP_KOKUHO_65_74/base$H_HM_POP_ins_65_74 * 
++     base$H_HM_de_EXP_65_74
+
+> base$H_HM_EXP_KOKUHO = base$H_HM_EXP_KOKUHO_0_14 + 
++     base$H_HM_EXP_KOKUHO_15_44 + base$H_HM_EXP_KOKUHO_45_64 + 
++     base$H_HM_EXP_KOKUHO_65_7 .... [TRUNCATED] 
+
+> base$H_HM_EXP_KOKUHO_pub = base$H_HM_EXP_KOKUHO * 
++     0.5
+
+> base$H_HM_EXP_KOKUHO_pre = base$H_HM_EXP_KOKUHO * 
++     0.5
+
+> base$H_HM_EXP_KENPO_0_14 = base$H_HM_POP_KENPO_0_14/base$H_HM_POP_ins_0_14 * 
++     base$H_HM_de_EXP_0_14
+
+> base$H_HM_EXP_KENPO_15_44 = base$H_HM_POP_KENPO_15_44/base$H_HM_POP_ins_15_44 * 
++     base$H_HM_de_EXP_15_44
+
+> base$H_HM_EXP_KENPO_45_64 = base$H_HM_POP_KENPO_45_64/base$H_HM_POP_ins_45_64 * 
++     base$H_HM_de_EXP_45_64
+
+> base$H_HM_EXP_KENPO_65_74 = base$H_HM_POP_KENPO_65_74/base$H_HM_POP_ins_65_74 * 
++     base$H_HM_de_EXP_65_74
+
+> base$H_HM_EXP_KENPO = base$H_HM_EXP_KENPO_0_14 + base$H_HM_EXP_KENPO_15_44 + 
++     base$H_HM_EXP_KENPO_45_64 + base$H_HM_EXP_KENPO_65_74
+
+> base$H_HM_EXP_KENPO_pub = base$H_HM_EXP_KENPO * 0.164
+
+> base$H_HM_EXP_KENPO_pre = base$H_HM_EXP_KENPO * 0.836
+
+> base$H_HM_EXP_KUMIAI_0_14 = base$H_HM_POP_KUMIAI_0_14/base$H_HM_POP_ins_0_14 * 
++     base$H_HM_de_EXP_0_14
+
+> base$H_HM_EXP_KUMIAI_15_44 = base$H_HM_POP_KUMIAI_15_44/base$H_HM_POP_ins_15_44 * 
++     base$H_HM_de_EXP_15_44
+
+> base$H_HM_EXP_KUMIAI_45_64 = base$H_HM_POP_KUMIAI_45_64/base$H_HM_POP_ins_45_64 * 
++     base$H_HM_de_EXP_45_64
+
+> base$H_HM_EXP_KUMIAI_65_74 = base$H_HM_POP_KUMIAI_65_74/base$H_HM_POP_ins_65_74 * 
++     base$H_HM_de_EXP_65_74
+
+> base$H_HM_EXP_KUMIAI = base$H_HM_EXP_KUMIAI_0_14 + 
++     base$H_HM_EXP_KUMIAI_15_44 + base$H_HM_EXP_KUMIAI_45_64 + 
++     base$H_HM_EXP_KUMIAI_65_7 .... [TRUNCATED] 
+
+> base$H_HM_EXP_KUMIAI_fix = base$H_HM_EXP_KUMIAI_fix[index(base) == 
++     2013]
+
+> base$H_HM_EXP_KUMIAI_pub = base$H_HM_EXP_KUMIAI_fix
+
+> base$H_HM_EXP_KUMIAI_pre = base$H_HM_EXP_KUMIAI - 
++     base$H_HM_EXP_KUMIAI_fix
+
+> base$H_HM_EXP_KYOSAI_0_14 = base$H_HM_POP_KYOSAI_0_14/base$H_HM_POP_ins_0_14 * 
++     base$H_HM_de_EXP_0_14
+
+> base$H_HM_EXP_KYOSAI_15_44 = base$H_HM_POP_KYOSAI_15_44/base$H_HM_POP_ins_15_44 * 
++     base$H_HM_de_EXP_15_44
+
+> base$H_HM_EXP_KYOSAI_45_64 = base$H_HM_POP_KYOSAI_45_64/base$H_HM_POP_ins_45_64 * 
++     base$H_HM_de_EXP_45_64
+
+> base$H_HM_EXP_KYOSAI_65_74 = base$H_HM_POP_KYOSAI_65_74/base$H_HM_POP_ins_65_74 * 
++     base$H_HM_de_EXP_65_74
+
+> base$H_HM_EXP_KYOSAI = base$H_HM_EXP_KYOSAI_0_14 + 
++     base$H_HM_EXP_KYOSAI_15_44 + base$H_HM_EXP_KYOSAI_45_64 + 
++     base$H_HM_EXP_KYOSAI_65_7 .... [TRUNCATED] 
+
+> base$H_HM_EXP_KYOSAI_pub = base$H_HM_EXP_KYOSAI
+
+> base$H_HM_EXP_KYOSAI_pre = 0
+
+> base$H_HM_EXP_pre_per_GDP = base$H_HM_EXP_pre/base$M_GDP
+
+> base$H_HM_EXP_pre_per_GDP = base$H_HM_EXP_pre_per_GDP[index(base) == 
++     2013]
+
+> base$H_HM_EXP_pat = base$H_HM_pat_rates * base$H_HM_EXP
+
+> base$H_HM_de_EXP = base$H_HM_EXP - base$H_HM_EXP_pat
+
+> base$H_HM_EXP_pre_GDP = base$M_GDP * base$H_HM_EXP_pre_per_GDP
+
+> base$H_HM_EXP_pub = base$H_HM_de_EXP - base$H_HM_EXP_pre_GDP
+
+> base$H_HC_CER_Rate_40_64 = base$H_HC_CER_Rate_40_64[index(base) == 
++     2013]
+
+> base$H_HC_CER_Rate_65_74 = base$H_HC_CER_Rate_65_74[index(base) == 
++     2013]
+
+> base$H_HC_CER_Rate_75_o = base$H_HC_CER_Rate_75_o[index(base) == 
++     2013]
+
+> base$H_HC_POP_40_64 = dexpd(base$H_HC_POP_40_64, base$M_POP_40_64 * 
++     base$H_HC_CER_Rate_40_64, 2013)
+
+> base$H_HC_POP_65_74 = dexpd(base$H_HC_POP_65_74, base$M_POP_65_74 * 
++     base$H_HC_CER_Rate_65_74, 2013)
+
+> base$H_HC_POP_75_o = dexpd(base$H_HC_POP_75_o, base$M_POP_75_o * 
++     base$H_HC_CER_Rate_75_o, 2013)
+
+> base$H_HC_POP = base$H_HC_POP_40_64 + base$H_HC_POP_65_74 + 
++     base$H_HC_POP_75_o
+
+> base$H_HC_BEN_Rate = base$H_HC_BEN_Rate[index(base) == 
++     2013]
+
+> base$H_HC_POP_D = base$H_HC_POP * base$H_HC_BEN_Rate
+
+> base$H_HC_SHISETU_Rate = base$H_HC_SHISETU_Rate[index(base) == 
++     2013]
+
+> base$H_HC_KYOTAKU_Rate = base$H_HC_KYOTAKU_Rate[index(base) == 
++     2013]
+
+> base$H_HC_TIIKI_Rate = base$H_HC_TIIKI_Rate[index(base) == 
++     2013]
+
+> base$H_HC_POP_D_SHISETU = base$H_HC_POP_D * base$H_HC_SHISETU_Rate
+
+> base$H_HC_POP_D_KYOTAKU = base$H_HC_POP_D * base$H_HC_KYOTAKU_Rate
+
+> base$H_HC_POP_D_TIIKI = base$H_HC_POP_D * base$H_HC_TIIKI_Rate
+
+> base$H_HC_EXP_SHISETU_PC = base$H_HC_EXP_SHISETU_PC[index(base) == 
++     2013]
+
+> base$H_HC_EXP_KYOTAKU_PC = base$H_HC_EXP_KYOTAKU_PC[index(base) == 
++     2013]
+
+> base$H_HC_EXP_TIIKI_PC = base$H_HC_EXP_TIIKI_PC[index(base) == 
++     2013]
+
+> base$H_HC_ELA_SHISETU = base$H_HC_ELA_SHISETU[index(base) == 
++     2013]
+
+> base$H_HC_ELA_KYOTAKU = base$H_HC_ELA_KYOTAKU[index(base) == 
++     2013]
+
+> base$H_HC_ELA_TIIKI = base$H_HC_ELA_TIIKI[index(base) == 
++     2013]
+
+> base$H_HC_EXP_SHISETU = dexpd(base$H_HC_EXP_SHISETU, 
++     base$H_HC_POP_D_SHISETU * base$H_HC_EXP_SHISETU_PC * (((1 + 
++         base$M_GDP_R_PC_G .... [TRUNCATED] 
+
+> base$H_HC_EXP_KYOTAKU = dexpd(base$H_HC_EXP_KYOTAKU, 
++     base$H_HC_POP_D_KYOTAKU * base$H_HC_EXP_KYOTAKU_PC * (((1 + 
++         base$M_GDP_R_PC_G .... [TRUNCATED] 
+
+> base$H_HC_EXP_TIIKI = dexpd(base$H_HC_EXP_TIIKI, base$H_HC_POP_D_TIIKI * 
++     base$H_HC_EXP_TIIKI_PC * (((1 + base$M_GDP_R_PC_GR)^base$H_RUR - 
++  .... [TRUNCATED] 
+
+> base$H_HC_EXP = base$H_HC_EXP_SHISETU + base$H_HC_EXP_KYOTAKU + 
++     base$H_HC_EXP_TIIKI
+
+> base$H_HC_de_EXP = base$H_HC_EXP * 0.9
+
+> base$H_HC_EXP_pub = base$H_HC_de_EXP * 0.5
+
+> base$H_HC_EXP_pre = base$H_HC_de_EXP * 0.5
+> 
+> ## 
+> ## 財政分野（他ファイル参照）
+> ## 
+> source("prj_f.r", encoding="UTF-8", echo=TRUE) # 財政
+
+> base$F_FO_RGDP = base$F_FO/base$M_GDP
+
+> base$F_SHS_FI_RGDP_RES = (base$H_HM_EXP_pub + base$H_HC_EXP_pub + 
++     base$P_LIAB_KOKU + base$P_LIAB_WORK)/base$M_GDP
+
+> base$F_SHS_FI_RGDP = dexpd(base$F_SHS_FI/base$M_GDP, 
++     as.numeric(base$F_SHS_FI_RGDP[index(base) == 2013]) + base$F_SHS_FI_RGDP_RES - 
++        .... [TRUNCATED] 
+
+> base$F_SHS_FI = base$F_SHS_FI_RGDP * base$M_GDP
+
+> base$F_SNS_FI_RGDP = base$F_SNS_FI/base$M_GDP
+
+> base$F_SNS_FI = dexpd(base$F_SNS_FI_RGDP, base$F_SNS_FI_RGDP[index(base) == 
++     2013], 2013) * base$M_GDP
+
+> base$F_XTAX_IW_RGDP = dexpd(base$F_XTAX_IW/base$M_GDP, 
++     base$F_XTAX_R * as.numeric((base$F_XTAX_IW[index(base) == 
++         2013]/base$M_GDP[ .... [TRUNCATED] 
+
+> base$F_XTAX_IW = base$F_XTAX_IW_RGDP * base$M_GDP
+
+> base$F_STAX_IW_RGDP = dexpd(base$F_STAX_IW/base$M_GDP, 
++     as.numeric(base$F_STAX_IW[index(base) == 2013]/base$M_GDP[index(base) == 
++         20 .... [TRUNCATED] 
+
+> base$F_STAX_IW = base$F_STAX_IW_RGDP * base$M_GDP
+
+> base$F_TAX_IW_RGDP = base$F_XTAX_IW_RGDP + base$F_STAX_IW_RGDP
+
+> base$F_TAX_IW = base$F_XTAX_IW + base$F_STAX_IW
+
+> base$F_SHL_IW_RGDP = base$F_SHL_IW/base$M_GDP
+
+> base$F_SHL_IW = dexpd(base$F_SHL_IW_RGDP, base$F_SHL_IW_RGDP[index(base) == 
++     2013], 2013) * base$M_GDP
+
+> base$F_RT_IW_RGDP = base$F_RT_IW/base$M_GDP
+
+> base$F_RT_IW = dexpd(base$F_RT_IW_RGDP, base$F_RT_IW_RGDP[index(base) == 
++     2013], 2013) * base$M_GDP
+
+> base$F_FI_RGDP = base$F_XTAX_IW_RGDP + base$F_STAX_IW_RGDP + 
++     base$F_SHL_IW_RGDP
+
+> base$F_FI = base$F_FI_RGDP * base$M_GDP
+
+> base$F_FO_RGDP = base$F_SHS_FI_RGDP + base$F_SNS_FI_RGDP
+
+> base$F_FO = base$F_FO_RGDP * base$M_GDP
+
+> base$F_PRB = base$F_FI - base$F_FO + base$F_PRB_FIX_RGDP * 
++     base$M_GDP
+
+> base$F_PRB_PLUS_RT_IW = base$F_PRB + base$F_RT_IW
+
+> base$F_SSM = acml(base$F_SSM, -base$F_PRB_PLUS_RT_IW, 
++     1 + base$M_BOND_RATE - F_BOND_SPREAD, 2014)
+
+> base$F_SSM_RGDP = base$F_SSM/base$M_GDP
+
+> base$F_RT_FI_RGDP = dexpd(base$F_RT_FI, (base$M_BOND_RATE - 
++     F_BOND_SPREAD) * lg2(base$F_SSM), 2013)/base$M_GDP
+
+> base$F_RT_FI = base$F_RT_FI_RGDP * base$M_GDP
+
+> base$F_FB = base$F_PRB - base$F_RT_FI + base$F_RT_IW
+
+> base$F_FB_RGDP = base$F_FB/base$M_GDP
+> 
+> 
+> ## **********************************************************************
+> ## プロトタイプモデル 将来予測部門 繰り返し計算（ガウス・ザイデル法）
+> ## **********************************************************************
+> 
+> nitr=0
+> dif=1
+> while(dif > 0.01){
++ 			base$F_PRB_b=base$F_PRB
++ 			source("prj_p.r", encoding="UTF-8")
++ 			source("prj_h.r", encoding="UTF-8")
++ 			source("prj_f.r", encoding="UTF-8")
++ 			difv=abs(base$F_PRB_b-base$F_PRB)
++ 			dif=max(difv, na.rm=TRUE)
++ 			nitr=nitr+1
++ 		}
+> 
+> nitr
+[1] 1
+> dif
+[1] 0
+> 
+> 
+> 
+> 
+> ## **********************************************************************
+> ## プロトタイプモデル 基幹部門 アウトプット分野
+> ## **********************************************************************
+> 
+> source("fig.r", encoding="UTF-8", echo=TRUE)
+
+> list1 = c("M_GDP", "M_GDP_R", "M_GDP_PC", "M_GDP_R_PC", 
++     "M_PGDP_GR", "M_GDP_GR", "M_GDP_R_GR", "M_GDP_PC_GR", "M_GDP_R_PC_GR", 
++     "M_CPI_ ..." ... [TRUNCATED] 
+
+> for (j in list1) {
++     eval(parse(text = paste("base$", j, " = dexpd(NA*base$one, base$", 
++         j, ", 2012)", sep = "")))
++ }
+
+> for (j in list1) {
++     eval(parse(text = paste("base$", j, " = dexpd(base$", j, 
++         ", NA*base$one, 2050)", sep = "")))
++ }
+
+> for (j in list1) {
++     eval(parse(text = paste("base$", j, "_RP = base$", j, "/base$M_GDP*100", 
++         sep = "")))
++ }
+
+> base$M_GDP_GR_RP = base$M_GDP_GR * 100
+
+> base$M_GDP_R_GR_RP = base$M_GDP_R_GR * 100
+
+> base$M_GDP_PC_GR_RP = base$M_GDP_PC_GR * 100
+
+> base$M_GDP_R_PC_GR_RP = base$M_GDP_R_PC_GR * 100
+
+> base$M_PGDP_GR_RP = base$M_PGDP_GR * 100
+
+> base$M_CPI_GR_RP = base$M_CPI_GR * 100
+
+> base$M_MARKET_RATE_RP = base$M_MARKET_RATE * 100
+
+> base$M_BOND_RATE_RP = base$M_MARKET_RATE * 100
+
+> list2 = list1
+
+> for (j in 1:length(list1)) {
++     list2[j] = paste("base$", list1[j], sep = "")
++ }
+
+> listx = cbind(base$year, base$M_GDP, base$M_GDP_R, 
++     base$M_GDP_PC, base$M_GDP_R_PC, base$M_GDP_GR_RP, base$M_GDP_R_GR_RP, 
++     base$M_GDP_PC .... [TRUNCATED] 
+
+> write.csv(base, file = "outdata.csv", row.names = TRUE)
+
+> write.csv(listx, file = "outdata2.csv", row.names = TRUE)
+> 
+> 
+> rm(list=ls(all=TRUE))
+> 
+> 
