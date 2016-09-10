@@ -95,12 +95,12 @@ for (i in 1980:2101)
 
 
 
-## 国民年金純給付費		base$P_NEXP_KOKU
-base$P_NEXP_KOKU =	base$P_EXP_KOKU - base$P_GRA_KOKU
+## 国民年金純給付費base$P_NEXP_KOKU
+base$P_NEXP_KOKU =base$P_EXP_KOKU - base$P_GRA_KOKU
 base$P_NEXP_KOKU["2013"] = mean(base$P_NEXP_KOKU, na.rm = T)
 
 
-base$P_NEXP_KOKU =	acml(base$P_NEXP_KOKU,
+base$P_NEXP_KOKU =acml(base$P_NEXP_KOKU,
                         0 * base$one,
                         1 + base$M_POP_GR,
                         2014)
@@ -113,19 +113,19 @@ base$P_EXP_OTH_KOKU =  acml(base$P_EXP_OTH_KOKU,
 
 ##被用者年金給付費　base$P_NEXP_WORK
 
-base$P_EXP_CHIHOU =	base$P_EXP_CHIHOU_TAISHOKU + base$P_EXP_CHIHOU_SHOGAI +
+base$P_EXP_CHIHOU =base$P_EXP_CHIHOU_TAISHOKU + base$P_EXP_CHIHOU_SHOGAI +
   base$P_EXP_CHIHOU_IZOKU
 
-base$P_EXP_SHIGAKU =	base$P_EXP_SHIGAKU_TAISHOKU + base$P_EXP_SHIGAKU_SHOGAI +
+base$P_EXP_SHIGAKU =base$P_EXP_SHIGAKU_TAISHOKU + base$P_EXP_SHIGAKU_SHOGAI +
   base$P_EXP_SHIGAKU_IZOKU
 
-base$P_NEXP_WORK =	(
+base$P_NEXP_WORK =(
   base$P_EXP_KOSEI + base$P_EXP_KOKKA + base$P_EXP_CHIHOU + base$P_EXP_SHIGAKU
   - base$P_GRA_KOSEI - base$P_GRA_KOKKA - base$P_GRA_CHIHOU -
     base$P_GRA_SHIGAKU
 )
 
-base$P_NPOP_JUKYU_WORK =	(
+base$P_NPOP_JUKYU_WORK =(
   base$P_NPOP_JUKYU_KOSEI +
     base$P_NPOP_JUKYU_KOKKA +
     base$P_NPOP_JUKYU_CHIHOU +
@@ -194,7 +194,7 @@ base$P_EXP_KOKU_KISO =  dexpd(
 
 ##被用者年金基礎年金拠出金 base$P_EXP_WORK_KISO
 
-base$P_EXP_WORK_KISO =	dexpd(
+base$P_EXP_WORK_KISO =dexpd(
   base$P_EXP_WORK_KISO,
   (base$P_EXP_KISO - base$P_EXCEPT_LIAB) / (base$P_NPOP_ICHI_SANTEI +
                                               base$P_NPOP_NI + base$P_NPOP_SAN) * (base$P_NPOP_NI + base$P_NPOP_SAN),
@@ -210,14 +210,14 @@ base$P_LIAB_KOKU =  dexpd(base$P_LIAB_KOKU,
                           2013)
 
 ##被用者年金国庫負担金
-base$P_LIAB_WORK =	base$P_EXP_WORK_KISO * 0.5
+base$P_LIAB_WORK =base$P_EXP_WORK_KISO * 0.5
 
 
 ##国民年金総支出
-base$P_AEXP_KOKU =	base$P_NEXP_KOKU + base$P_EXP_KOKU_KISO + base$P_EXP_OTH_KOKU
+base$P_AEXP_KOKU =base$P_NEXP_KOKU + base$P_EXP_KOKU_KISO + base$P_EXP_OTH_KOKU
 
 ##被用者年金総支出
-base$P_AEXP_WORK =	base$P_NEXP_WORK + base$P_EXP_WORK_KISO + base$P_EXP_OTH_WORK
+base$P_AEXP_WORK =base$P_NEXP_WORK + base$P_EXP_WORK_KISO + base$P_EXP_OTH_WORK
 
 
 ##国民年金保険料収入 base$P_REV_KOKU
@@ -271,14 +271,14 @@ base$P_REV_OTH_WORK = dexpd(base$P_REV_OTH_WORK, base$P_REV_WORK * base$P_R_OTH_
 base$P_AREV_KOKU =  base$P_REV_KOKU + base$P_LIAB_KOKU + base$P_REV_OTH_KOKU
 
 ##被用者年金総収入 base$P_AREV_WORK
-base$P_AREV_WORK =	base$P_REV_WORK + base$P_LIAB_WORK + base$P_REV_OTH_WORK
+base$P_AREV_WORK =base$P_REV_WORK + base$P_LIAB_WORK + base$P_REV_OTH_WORK
 
 
 ##国民年金収支(運用収入なし)
 base$P_BA_KOKU =  base$P_AREV_KOKU - base$P_AEXP_KOKU
 
 ##被用者年金収支(運用収入なし)
-base$P_BA_WORK =	base$P_AREV_WORK - base$P_AEXP_WORK
+base$P_BA_WORK =base$P_AREV_WORK - base$P_AEXP_WORK
 
 
 ##利回りの計算
